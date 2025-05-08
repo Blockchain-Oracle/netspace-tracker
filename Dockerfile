@@ -20,8 +20,6 @@ RUN cd node_modules/better-sqlite3 && npm run build-release
 FROM base AS builder
 # User root is inherited
 COPY --from=deps /app/node_modules ./node_modules
-COPY . . # Copies build-sqlite.sh from build context to /app/build-sqlite.sh
-RUN chmod +x build-sqlite.sh
 RUN pnpm run build
 
 # Production image
