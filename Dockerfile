@@ -13,6 +13,7 @@ RUN cd node_modules/better-sqlite3 && npm run build-release
 
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
+COPY package.json ./package.json
 RUN pnpm run build
 
 FROM base AS runner
