@@ -1,8 +1,10 @@
 FROM node:18-alpine AS base
-USER root # Switch to root for system package installation
+# Switch to root for system package installation
+USER root
 RUN apk add --no-cache python3 make g++ gcc libc-dev bash
 RUN npm install -g pnpm
-WORKDIR /app # /app will be created by root and owned by root
+# /app will be created by root and owned by root
+WORKDIR /app
 
 # Install dependencies
 FROM base AS deps
@@ -27,7 +29,8 @@ FROM base AS runner
 # User root is inherited
 ENV NODE_ENV production
 
-RUN mkdir -p /app/data # Runs as root
+# Runs as root
+RUN mkdir -p /app/data
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
@@ -35,14 +38,16 @@ RUN adduser --system --uid 1001 nextjs
 # Change ownership of the entire /app directory to the new user/group
 RUN chown -R nextjs:nodejs /app
 
-USER nextjs # Switch to the non-root user for running the app
+# Switch to the non-root user for running the app
+USER nextjs
 
 COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
 
-VOLUME ["/app/data"] # /app/data is now owned by nextjs
+# /app/data is now owned by nextjs
+VOLUME ["/app/data"]
 
 # Expose port
 EXPOSE 3000
