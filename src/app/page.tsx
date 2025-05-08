@@ -81,8 +81,7 @@ export default function Home() {
       <footer className="border-t py-4 sm:py-6">
         <div className="container px-4 mx-auto flex flex-col items-center justify-between gap-3 md:flex-row">
           <p className="text-center text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} Autonomys Netspace Tracker.
-            All rights reserved.
+           Autonomys Netspace Tracker
           </p>
           <div className="flex items-center gap-4">
             <Link href="/about" className="text-sm text-muted-foreground hover:text-foreground">

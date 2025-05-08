@@ -38,6 +38,7 @@ interface NetspaceStore {
   
   // Actions
   fetchNetspaceData: (timeRange: string) => Promise<void>;
+  fetchData: () => Promise<void>;
   setTimeRange: (range: string) => void;
   toggleAutoRefresh: () => void;
   setAutoRefreshInterval: (interval: number) => void;
@@ -117,6 +118,12 @@ export const useNetspaceStore = create<NetspaceStore>((set, get) => ({
         isLoading: false 
       });
     }
+  },
+  
+  // Fetch data using current timeRange
+  fetchData: async () => {
+    const { timeRange, fetchNetspaceData } = get();
+    await fetchNetspaceData(timeRange);
   },
   
   setTimeRange: (range: string) => {

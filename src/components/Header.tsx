@@ -26,6 +26,9 @@ export function Header() {
             <Link href="/" className="text-sm font-medium hover:text-primary">
               Dashboard
             </Link>
+            <Link href="/network-status" className="text-sm font-medium hover:text-primary">
+              Network Status
+            </Link>
             <Link href="/community" className="text-sm font-medium hover:text-primary">
               Community
             </Link>
@@ -70,6 +73,13 @@ export function Header() {
               onClick={() => setIsMenuOpen(false)}
             >
               Dashboard
+            </Link>
+            <Link 
+              href="/network-status"
+              className="text-base font-medium hover:text-primary px-1"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Network Status
             </Link>
             <Link 
               href="/community"
