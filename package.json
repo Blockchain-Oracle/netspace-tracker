@@ -7,7 +7,6 @@
   },
   "scripts": {
     "dev": "next dev --turbopack",
-    "prebuild": "chmod +x ./build-sqlite.sh && ./build-sqlite.sh",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
