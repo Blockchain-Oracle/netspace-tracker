@@ -1,0 +1,30 @@
+# Node modules and dependencies
+node_modules
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Build outputs
+.next
+out
+build
+dist
+
+# Local env files
+.env*.local
+.env
+
+# Docker files
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Version control
+.git
+.gitignore
+
+# Other
+README.md
+DOCKER-README.md
+*.md
+.DS_Store 
