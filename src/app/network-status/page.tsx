@@ -10,6 +10,12 @@ import {
 } from '@/components/ui/card';
 import { NetworkStatusMonitor } from '@/components/NetworkStatusMonitor';
 import { NotificationSubscription } from '@/components/ui/notification-subscription';
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { NetworkStatus, NetworkStatusEvent } from '@/lib/network-monitor';
 import { getRelativeTimeString } from '@/lib/utils';

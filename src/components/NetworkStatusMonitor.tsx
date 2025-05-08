@@ -1,10 +1,16 @@
 "use client"
 
 import { useState, useEffect } from 'react';
-import { Card, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { NotificationSubscription } from '@/components/ui/notification-subscription';
 import { 
   NetworkStatus, 
   NetworkStatusEvent, 
+  subscribeToNetworkStatus, 
+  getCurrentNetworkStatus,
+  getNetworkStatusHistory,
+  startNetworkMonitoring 
 } from '@/lib/network-monitor';
 import { CheckCircle, AlertTriangle, XCircle, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
