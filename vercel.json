@@ -1,5 +1,5 @@
 {
-  "buildCommand": "chmod +x build.sh && ./build.sh",
+  "buildCommand": "pnpm run build",
   "installCommand": "pnpm install",
   "framework": "nextjs"
 } 
