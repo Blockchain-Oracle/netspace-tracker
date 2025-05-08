@@ -13,7 +13,7 @@ export default function Home() {
       <Header />
       
       <main className="flex-1">
-        <section className="container px-4 py-6 sm:py-10">
+        <section className="container px-4 mx-auto py-6 sm:py-10">
           <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-center mb-8 sm:mb-12">
               <div>
@@ -79,7 +79,7 @@ export default function Home() {
       </main>
       
       <footer className="border-t py-4 sm:py-6">
-        <div className="container px-4 flex flex-col items-center justify-between gap-3 md:flex-row">
+        <div className="container px-4 mx-auto flex flex-col items-center justify-between gap-3 md:flex-row">
           <p className="text-center text-sm text-muted-foreground">
             &copy; {new Date().getFullYear()} Autonomys Netspace Tracker.
             All rights reserved.

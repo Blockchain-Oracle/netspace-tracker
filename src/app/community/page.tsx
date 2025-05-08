@@ -6,7 +6,7 @@ import Link from "next/link";
 
 export default function CommunityPage() {
   return (
-    <div className="container px-4 py-6 sm:py-10">
+    <div className="container px-4 mx-auto py-6 sm:py-10">
       <div className="mb-6 sm:mb-10">
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-2">Autonomys Community</h1>
         <p className="text-muted-foreground text-base sm:text-lg">
