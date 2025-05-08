@@ -1,4 +1,3 @@
-import { NetspaceChart } from "@/components/NetspaceChart";
 import { EnhancedNetspaceChart } from "@/components/EnhancedNetspaceChart";
 import { NetworkStats } from "@/components/NetworkStats";
 import { ControlPanel } from "@/components/ControlPanel";
@@ -17,8 +16,8 @@ export default function Home() {
           <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-center mb-8 sm:mb-12">
               <div>
-                <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-3 sm:mb-4">
-                  Autonomys Netspace Tracker
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight">
+                  Monitor Autonomys&rsquo; Network <span className="text-primary">Growth</span>
                 </h1>
                 <p className="text-lg sm:text-xl text-muted-foreground mb-4 sm:mb-6">
                   Real-time visualization and analysis of the Autonomys network's growth and performance

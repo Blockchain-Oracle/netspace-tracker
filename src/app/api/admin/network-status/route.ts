@@ -6,7 +6,7 @@ import path from 'path';
 const dbPath = path.resolve(process.cwd(), 'subscriptions.db');
 const db = new Database(dbPath);
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     // Get network status history
     const history = db.prepare(`

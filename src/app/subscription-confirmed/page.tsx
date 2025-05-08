@@ -21,7 +21,7 @@ export default function SubscriptionConfirmedPage() {
         
         <div className="space-y-2">
           <p className="text-sm text-muted-foreground">
-            You'll receive updates when:
+            You&rsquo;ll receive updates when:
           </p>
           <ul className="text-sm text-muted-foreground list-disc inline-block text-left">
             <li>Network status changes to degraded or down</li>
