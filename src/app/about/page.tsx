@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export default function AboutPage() {
   return (
-    <div className="container px-4 py-6 sm:py-10">
+    <div className="container px-4 mx-auto py-6 sm:py-10">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4 sm:mb-6">About Autonomys Netspace Tracker</h1>
         
