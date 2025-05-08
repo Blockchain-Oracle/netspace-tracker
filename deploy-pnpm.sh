@@ -24,9 +24,9 @@ fi
 NODE_ENV=${NODE_ENV:-production}
 echo -e "${YELLOW}Deploying for environment: ${NODE_ENV}${NC}"
 
-# Install dependencies
+# Install dependencies (including dev dependencies needed for build)
 echo -e "${GREEN}Installing dependencies...${NC}"
-pnpm install --prod
+pnpm install
 
 # Handle better-sqlite3 native module
 echo -e "${YELLOW}Setting up better-sqlite3 native module...${NC}"
