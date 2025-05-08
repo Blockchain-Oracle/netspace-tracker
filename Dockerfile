@@ -13,7 +13,7 @@ WORKDIR /app
 FROM base AS deps
 COPY package.json pnpm-lock.yaml* build-sqlite.sh ./
 RUN chmod +x build-sqlite.sh
-RUN pnpm install --frozen-lockfile
+RUN pnpm install 
 
 # Explicitly build better-sqlite3
 RUN cd node_modules/better-sqlite3 && npm run build-release
