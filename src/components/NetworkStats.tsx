@@ -1,96 +1,195 @@
 'use client';
 
-import { Card } from "@/components/ui/card";
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNetspaceStore } from "@/lib/store";
 import { formatBytes, formatNumber } from "@/lib/utils";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { NetworkType } from '@/app/network-status/data/netspace-data';
+import { StorageUnitsExplainer } from './StorageUnitsExplainer';
 
 export function NetworkStats() {
-  const { netspaceData, latestData } = useNetspaceStore();
+  const { netspaceData, networkType } = useNetspaceStore();
+  const [activeTab, setActiveTab] = useState<string>('overview');
   
-  // Calculate block time (average of last few blocks if available)
-  const calculateAvgBlockTime = () => {
-    if (!netspaceData || netspaceData.length < 10) return '10.0';
-    
-    // Assuming block time is roughly 5 minutes
-    return '5.0';
-  };
-
-  // Derive metrics from latest data
-  const totalNetspace = latestData?.value || 0;
-  const blockHeight = latestData?.blockHeight || 0;
-  const difficulty = latestData?.difficulty || 0;
-  const blockTime = calculateAvgBlockTime();
+  // If we don't have data yet, show loading state
+  if (!netspaceData || netspaceData.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Network Statistics</CardTitle>
+        </CardHeader>
+        <CardContent className="flex justify-center items-center h-[300px]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </CardContent>
+      </Card>
+    );
+  }
   
-  // Simulated metrics (not in our actual data model yet)
-  const activeNodes = 231;
-  const transactions = 1245;
-  const hashRate = (difficulty * Math.pow(2, 32) / (300)).toFixed(2);
-
+  // Get the latest data point
+  const latestData = netspaceData[netspaceData.length - 1];
+  
+  // Prepare data for node type distribution chart
+  const nodeTypeData = [
+    { name: 'CLI Nodes', value: latestData.subspaceCLINodes || 0 },
+    { name: 'Space Acres', value: latestData.spaceAcresNodes || 0 }
+  ].filter(item => item.value > 0);
+  
+  // Prepare data for OS distribution chart
+  const osDistributionData = [
+    { name: 'Linux', value: latestData.linuxNodes || 0 },
+    { name: 'Windows', value: latestData.windowsNodes || 0 },
+    { name: 'macOS', value: latestData.macOSNodes || 0 }
+  ].filter(item => item.value > 0);
+  
+  // Colors for charts
+  const COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444'];
+  
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
-      <StatCard 
-        title="Current Block Height" 
-        value={formatNumber(blockHeight)}
-        icon={<BlockIcon className="h-5 w-5" />}
-      />
-      <StatCard 
-        title="Network Difficulty" 
-        value={formatNumber(difficulty)}
-        icon={<DifficultIcon className="h-5 w-5" />}
-      />
-      <StatCard 
-        title="Block Time" 
-        value={`${blockTime}s`}
-        icon={<ClockIcon className="h-5 w-5" />}
-      />
-      <StatCard 
-        title="Total Netspace" 
-        value={latestData?.valueInPiB ? `${formatNumber(latestData.valueInPiB)} PiB` : formatBytes(totalNetspace)}
-        icon={<NetworkIcon className="h-5 w-5" />}
-      />
-      <StatCard 
-        title="Estimated Hash Rate" 
-        value={`${formatNumber(parseFloat(hashRate))} TH/s`}
-        icon={<HashRateIcon className="h-5 w-5" />}
-      />
-      <StatCard 
-        title="Active Nodes" 
-        value={formatNumber(activeNodes)}
-        icon={<NodesIcon className="h-5 w-5" />} 
-      />
-      <StatCard 
-        title="24h Transactions" 
-        value={formatNumber(transactions)}
-        icon={<TransactionIcon className="h-5 w-5" />}
-      />
-      <StatCard 
-        title="Network Health" 
-        value="Good"
-        icon={<HealthIcon className="h-5 w-5 text-emerald-500" />}
-      />
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg">Network Statistics</CardTitle>
+          <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="mt-2">
+            <TabsList className="grid grid-cols-3">
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="nodes">Node Types</TabsTrigger>
+              <TabsTrigger value="os">OS Distribution</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </CardHeader>
+        <CardContent className="pt-4">
+          {activeTab === 'overview' && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <StatCard 
+                title="Total Nodes" 
+                value={formatNumber(latestData.nodeCount)} 
+                help="Active nodes in the network"
+              />
+              <StatCard 
+                title="Netspace" 
+                value={`${formatNumber(latestData.valueInPiB)} PiB`} 
+                help="Total pledged space"
+              />
+              <StatCard 
+                title="Block Height" 
+                value={formatNumber(latestData.blockHeight)} 
+                help="Current blockchain height"
+              />
+              <StatCard 
+                title="Difficulty" 
+                value={formatNumber(latestData.difficulty)} 
+                help="Network mining difficulty"
+              />
+            </div>
+          )}
+          
+          {activeTab === 'nodes' && (
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={nodeTypeData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                    nameKey="name"
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {nodeTypeData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value: number) => [formatNumber(value), 'Nodes']}
+                  />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+              
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <StatCard 
+                  title="CLI Nodes" 
+                  value={formatNumber(latestData.subspaceCLINodes || 0)} 
+                  help="Command-line interface nodes"
+                />
+                <StatCard 
+                  title="Space Acres" 
+                  value={formatNumber(latestData.spaceAcresNodes || 0)} 
+                  help="Space Acres farming app nodes"
+                />
+              </div>
+            </div>
+          )}
+          
+          {activeTab === 'os' && (
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={osDistributionData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                    nameKey="name"
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {osDistributionData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value: number) => [formatNumber(value), 'Nodes']}
+                  />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+              
+              <div className="grid grid-cols-3 gap-4 mt-4">
+                <StatCard 
+                  title="Linux" 
+                  value={formatNumber(latestData.linuxNodes || 0)} 
+                  help="Linux-based nodes"
+                />
+                <StatCard 
+                  title="Windows" 
+                  value={formatNumber(latestData.windowsNodes || 0)} 
+                  help="Windows-based nodes"
+                />
+                <StatCard 
+                  title="macOS" 
+                  value={formatNumber(latestData.macOSNodes || 0)} 
+                  help="macOS-based nodes"
+                />
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      
+      <StorageUnitsExplainer />
     </div>
   );
 }
 
 interface StatCardProps {
   title: string;
-  value: string;
-  icon: React.ReactNode;
+  value: string | number;
+  help?: string;
 }
 
-function StatCard({ title, value, icon }: StatCardProps) {
+function StatCard({ title, value, help }: StatCardProps) {
   return (
-    <Card className="p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs sm:text-sm text-muted-foreground">{title}</p>
-          <p className="text-base sm:text-lg font-semibold mt-1">{value}</p>
-        </div>
-        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center">
-          {icon}
-        </div>
-      </div>
-    </Card>
+    <div className="bg-muted/50 p-3 rounded-lg">
+      <h3 className="text-xs font-medium text-muted-foreground mb-1">{title}</h3>
+      <div className="text-2xl font-bold">{value}</div>
+      {help && <p className="text-xs text-muted-foreground mt-1">{help}</p>}
+    </div>
   );
 }
 

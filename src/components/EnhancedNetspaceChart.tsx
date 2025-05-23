@@ -6,6 +6,21 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useNetspaceStore } from "@/lib/store";
 import { formatNumber } from "@/lib/utils";
+import { LiveDataBanner } from "@/components/LiveDataBanner";
+import { getTimeRangesForNetwork } from "@/app/network-status/data/netspace-data";
+import { 
+  Tooltip as UITooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger 
+} from "@/components/ui/tooltip";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Area,
   Line,
@@ -13,12 +28,14 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   Legend,
   ResponsiveContainer,
   ComposedChart,
   Brush
 } from 'recharts';
+import { HelpCircle, Loader2 } from "lucide-react";
+import { ChartLegend } from "./ChartLegend";
 
 const CHART_HEIGHT = 500;
 
@@ -26,6 +43,7 @@ const tooltipFormatter = (value: number, name: string) => {
   if (name === 'netspace') return `${formatNumber(value / Math.pow(1024, 5))} PiB`;
   if (name === 'blockHeight') return formatNumber(value);
   if (name === 'difficulty') return formatNumber(value);
+  if (name === 'nodeCount') return formatNumber(value);
   return value;
 };
 
@@ -35,9 +53,12 @@ const dateFormatter = (date: string) => {
 };
 
 export function EnhancedNetspaceChart() {
-  const { netspaceData, timeRange, setTimeRange, exportData, fetchNetspaceData } = useNetspaceStore();
+  const { netspaceData, timeRange, setTimeRange, exportData, fetchNetspaceData, networkType } = useNetspaceStore();
   const [activeMetric, setActiveMetric] = useState<string>('netspace');
   const [chartType, setChartType] = useState<string>('area');
+  
+  // Get network-specific time ranges
+  const timeRanges = getTimeRangesForNetwork(networkType);
   
   // Fetch data when component mounts
   useEffect(() => {
@@ -53,7 +74,8 @@ export function EnhancedNetspaceChart() {
       netspace: point.value,
       netspacePiB: point.valueInPiB,
       blockHeight: point.blockHeight,
-      difficulty: point.difficulty
+      difficulty: point.difficulty,
+      nodeCount: point.nodeCount
     }));
   };
 
@@ -77,6 +99,12 @@ export function EnhancedNetspaceChart() {
       const maxValue = Math.max(...values) * 1.1;
       return [minValue, maxValue];
     }
+    if (activeMetric === 'nodeCount') {
+      const values = netspaceData.filter(d => d.nodeCount).map(d => d.nodeCount as number);
+      const minValue = Math.min(...values) * 0.95;
+      const maxValue = Math.max(...values) * 1.05;
+      return [minValue, maxValue];
+    }
     return ['auto', 'auto'];
   };
   
@@ -86,6 +114,7 @@ export function EnhancedNetspaceChart() {
       case 'netspace': return 'Netspace (PiB)';
       case 'blockHeight': return 'Block Height';
       case 'difficulty': return 'Difficulty';
+      case 'nodeCount': return 'Node Count';
       default: return '';
     }
   };
@@ -96,31 +125,63 @@ export function EnhancedNetspaceChart() {
   const metricColors = {
     netspace: '#10b981', // emerald-500
     blockHeight: '#3b82f6', // blue-500
-    difficulty: '#8b5cf6'  // violet-500
+    difficulty: '#8b5cf6',  // violet-500
+    nodeCount: '#f59e0b'    // amber-500
   };
+
+  // Determine chart title
+  let chartTitle = "Network Growth";
+  if (activeMetric === 'netspace') {
+    chartTitle = "Netspace Growth";
+  } else if (activeMetric === 'blockHeight') {
+    chartTitle = "Block Height Progress";
+  } else if (activeMetric === 'difficulty') {
+    chartTitle = "Difficulty Progression";
+  }
 
   return (
     <Card>
       <CardContent className="pt-6">
+        <LiveDataBanner />
+        
         <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <Tabs defaultValue={activeMetric} className="w-full sm:w-auto" onValueChange={setActiveMetric}>
             <TabsList>
               <TabsTrigger value="netspace">Netspace</TabsTrigger>
               <TabsTrigger value="blockHeight">Block Height</TabsTrigger>
               <TabsTrigger value="difficulty">Difficulty</TabsTrigger>
+              <TabsTrigger value="nodeCount">Node Count</TabsTrigger>
             </TabsList>
           </Tabs>
           
           <div className="flex flex-wrap gap-2 sm:gap-4">
-            <Tabs defaultValue={timeRange} className="w-full sm:w-auto" onValueChange={setTimeRange}>
-              <TabsList>
-                <TabsTrigger value="24h">24h</TabsTrigger>
-                <TabsTrigger value="7d">7d</TabsTrigger>
-                <TabsTrigger value="30d">30d</TabsTrigger>
-                <TabsTrigger value="90d">90d</TabsTrigger>
-                <TabsTrigger value="all">All</TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <Select 
+              defaultValue={timeRange} 
+              onValueChange={setTimeRange}
+              value={timeRange}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select timeframe" />
+              </SelectTrigger>
+              <SelectContent>
+                {timeRanges.map((range) => (
+                  <SelectItem key={range.value} value={range.value}>
+                    <TooltipProvider>
+                      <UITooltip>
+                        <TooltipTrigger asChild>
+                          <span>{range.label}</span>
+                        </TooltipTrigger>
+                        {range.description && (
+                          <TooltipContent side="right">
+                            <p>{range.description}</p>
+                          </TooltipContent>
+                        )}
+                      </UITooltip>
+                    </TooltipProvider>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             
             <Tabs defaultValue={chartType} className="w-full sm:w-auto" onValueChange={setChartType}>
               <TabsList>
@@ -179,11 +240,12 @@ export function EnhancedNetspaceChart() {
                   dy: 50
                 }}
               />
-              <Tooltip 
-                formatter={(value, name) => {
+              <RechartsTooltip 
+                labelFormatter={(value, name) => {
                   if (name === 'netspacePiB') return [`${formatNumber(value as number)} PiB`, 'Netspace'];
                   if (name === 'blockHeight') return [formatNumber(value as number), 'Block Height'];
                   if (name === 'difficulty') return [formatNumber(value as number), 'Difficulty'];
+                  if (name === 'nodeCount') return [formatNumber(value as number), 'Node Count'];
                   return [value, name];
                 }}
                 labelFormatter={(label) => new Date(label).toLocaleDateString(undefined, {
@@ -297,6 +359,39 @@ export function EnhancedNetspaceChart() {
                 />
               )}
               
+              {activeMetric === 'nodeCount' && chartType === 'area' && (
+                <Area 
+                  type="monotone" 
+                  dataKey="nodeCount" 
+                  name="Node Count" 
+                  stroke={metricColors.nodeCount}
+                  fill={metricColors.nodeCount}
+                  fillOpacity={0.2}
+                  activeDot={{ r: 8 }}
+                />
+              )}
+              
+              {activeMetric === 'nodeCount' && chartType === 'line' && (
+                <Line 
+                  type="monotone" 
+                  dataKey="nodeCount" 
+                  name="Node Count" 
+                  stroke={metricColors.nodeCount}
+                  dot={{ r: 1 }}
+                  activeDot={{ r: 8 }}
+                />
+              )}
+              
+              {activeMetric === 'nodeCount' && chartType === 'bar' && (
+                <Bar 
+                  dataKey="nodeCount" 
+                  name="Node Count" 
+                  fill={metricColors.nodeCount}
+                  fillOpacity={0.8}
+                  barSize={20}
+                />
+              )}
+              
               {timeRange === '30d' || timeRange === '90d' || timeRange === 'all' ? (
                 <Brush 
                   dataKey="date" 
@@ -308,6 +403,8 @@ export function EnhancedNetspaceChart() {
             </ComposedChart>
           </ResponsiveContainer>
         </div>
+        
+        <ChartLegend activeMetric={activeMetric} />
       </CardContent>
     </Card>
   );

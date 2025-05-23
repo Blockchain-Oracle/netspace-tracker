@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Info } from 'lucide-react';
 import { NotificationSubscription } from '@/components/ui/notification-subscription';
 import { 
   NetworkStatus, 
@@ -72,28 +73,41 @@ export function NetworkStatusMonitor() {
   const statusStyle = currentStatus ? statusColors[currentStatus.status] : statusColors.up;
   
   return (
-    <Card className={`${statusStyle.bg} border-0 shadow-sm w-full`}>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg flex justify-between items-center flex-wrap gap-2">
-          <span>Network Status</span>
-          {currentStatus && (
-            <Badge variant="outline" className={statusStyle.badge}>
-              {statusText[currentStatus.status]}
-            </Badge>
-          )}
-        </CardTitle>
-        <CardDescription className={`${statusStyle.text} mt-1`}>
-          {isLoading ? 'Checking status...' : 
-           error ? error :
-           currentStatus ? currentStatus.message : 'Status unavailable'}
-        </CardDescription>
-      </CardHeader>
-      {currentStatus && (
-        <CardFooter className="pt-0 text-xs text-slate-500">
-          Last updated: {getRelativeTimeString(currentStatus.timestamp)}
-        </CardFooter>
-      )}
-    </Card>
+    <div>
+      {/* Info banner for historic/mock data */}
+      <div className="bg-blue-50 border border-blue-200 rounded-md mb-4 p-3 text-sm text-blue-800 flex items-start">
+        <Info className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
+        <div>
+          <p className="font-medium">Demo Mode</p>
+          <p className="mt-1">
+            Currently showing historical status data. Live network monitoring coming soon!
+          </p>
+        </div>
+      </div>
+      
+      <Card className={`${statusStyle.bg} border-0 shadow-sm w-full`}>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg flex justify-between items-center flex-wrap gap-2">
+            <span>Network Status</span>
+            {currentStatus && (
+              <Badge variant="outline" className={statusStyle.badge}>
+                {statusText[currentStatus.status]}
+              </Badge>
+            )}
+          </CardTitle>
+          <CardDescription className={`${statusStyle.text} mt-1`}>
+            {isLoading ? 'Checking status...' : 
+             error ? error :
+             currentStatus ? currentStatus.message : 'Status unavailable'}
+          </CardDescription>
+        </CardHeader>
+        {currentStatus && (
+          <CardFooter className="pt-0 text-xs text-slate-500">
+            Last updated: {getRelativeTimeString(currentStatus.timestamp)}
+          </CardFooter>
+        )}
+      </Card>
+    </div>
   );
 }
 

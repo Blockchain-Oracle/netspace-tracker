@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNetspaceStore } from "@/lib/store";
+import { NetworkSelector } from "@/components/NetworkSelector";
 
 export function ControlPanel() {
   const { 
@@ -17,17 +18,21 @@ export function ControlPanel() {
         <CardTitle className="text-lg">Dashboard Controls</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="flex items-center space-x-3">
-            <p className="text-sm font-medium">Auto-refresh:</p>
-            <Button 
-              variant={autoRefreshEnabled ? "default" : "outline"} 
-              size="sm" 
-              onClick={toggleAutoRefresh}
-              className="h-8"
-            >
-              {autoRefreshEnabled ? 'On' : 'Off'}
-            </Button>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="flex items-center space-x-3">
+              <p className="text-sm font-medium">Auto-refresh:</p>
+              <Button 
+                variant={autoRefreshEnabled ? "default" : "outline"} 
+                size="sm" 
+                onClick={toggleAutoRefresh}
+                className="h-8"
+              >
+                {autoRefreshEnabled ? 'On' : 'Off'}
+              </Button>
+            </div>
+            
+            <NetworkSelector />
           </div>
           
           <div className="flex flex-wrap gap-2">

@@ -1,26 +1,63 @@
 import { create } from 'zustand';
 import {
   NetspaceDataPoint, 
-  generateMockNetspaceData, 
-  generateHourlyNetspaceData 
-} from './mock-data';
+  getNetworkData,
+  NetworkType,
+  filterDataByTimeRange
+} from '@/app/network-status/data/netspace-data';
 
-// Function to get data for a specific time range
-function getDataForTimeRange(range: string): NetspaceDataPoint[] {
-  switch (range) {
-    case '24h':
-      return generateHourlyNetspaceData(24);
-    case '7d':
-      return generateMockNetspaceData(7);
-    case '30d':
-      return generateMockNetspaceData(30);
-    case '90d':
-      return generateMockNetspaceData(90);
-    case 'all':
-      return generateMockNetspaceData(365);
-    default:
-      return generateMockNetspaceData(30);
-  }
+// Export utility functions for CSV and JSON export
+function exportToCsv(data: NetspaceDataPoint[]) {
+  if (!data || data.length === 0) return;
+  
+  // Create CSV content
+  const headers = ['Date', 'Netspace (bytes)', 'Netspace (PiB)', 'Node Count'];
+  if (data[0].blockHeight !== undefined) headers.push('Block Height');
+  if (data[0].difficulty !== undefined) headers.push('Difficulty');
+  
+  const csvRows = [headers.join(',')];
+  
+  data.forEach(point => {
+    const row = [
+      point.date,
+      point.value,
+      point.valueInPiB,
+      point.nodeCount || 'N/A'
+    ];
+    
+    if (data[0].blockHeight !== undefined) row.push(String(point.blockHeight || 'N/A'));
+    if (data[0].difficulty !== undefined) row.push(String(point.difficulty || 'N/A'));
+    
+    csvRows.push(row.join(','));
+  });
+  
+  const csvContent = csvRows.join('\n');
+  
+  // Create and download the file
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  
+  const url = URL.createObjectURL(blob);
+  link.href = url;
+  link.setAttribute('download', `netspace-data-${new Date().toISOString().split('T')[0]}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function exportToJson(data: NetspaceDataPoint[]) {
+  if (!data || data.length === 0) return;
+  
+  const jsonContent = JSON.stringify(data, null, 2);
+  const blob = new Blob([jsonContent], { type: 'application/json' });
+  const link = document.createElement('a');
+  
+  const url = URL.createObjectURL(blob);
+  link.href = url;
+  link.setAttribute('download', `netspace-data-${new Date().toISOString().split('T')[0]}.json`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 interface NetspaceStore {
@@ -31,6 +68,7 @@ interface NetspaceStore {
   error: string | null;
   
   // UI State
+  networkType: NetworkType;
   timeRange: string;
   autoRefreshEnabled: boolean;
   autoRefreshInterval: number; // in seconds
@@ -40,6 +78,7 @@ interface NetspaceStore {
   fetchNetspaceData: (timeRange: string) => Promise<void>;
   fetchData: () => Promise<void>;
   setTimeRange: (range: string) => void;
+  setNetworkType: (network: NetworkType) => void;
   toggleAutoRefresh: () => void;
   setAutoRefreshInterval: (interval: number) => void;
   setNetspaceData: (data: NetspaceDataPoint[]) => void;
@@ -47,54 +86,13 @@ interface NetspaceStore {
   exportData: (format: 'csv' | 'json') => void;
 }
 
-// Helper for exporting data
-const exportToCsv = (data: NetspaceDataPoint[]): void => {
-  const csvContent = [
-    // CSV Header
-    ['Date', 'Netspace (Bytes)', 'Netspace (PiB)', 'Block Height', 'Difficulty'].join(','),
-    // CSV Data rows
-    ...data.map(item => 
-      [
-        item.date, 
-        item.value, 
-        item.valueInPiB, 
-        item.blockHeight || '', 
-        item.difficulty || ''
-      ].join(',')
-    )
-  ].join('\n');
-
-  // Create a download link
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.setAttribute('href', url);
-  link.setAttribute('download', `netspace-data-${new Date().toISOString().split('T')[0]}.csv`);
-  link.style.visibility = 'hidden';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
-
-const exportToJson = (data: NetspaceDataPoint[]): void => {
-  const jsonContent = JSON.stringify(data, null, 2);
-  const blob = new Blob([jsonContent], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.setAttribute('href', url);
-  link.setAttribute('download', `netspace-data-${new Date().toISOString().split('T')[0]}.json`);
-  link.style.visibility = 'hidden';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
-
 export const useNetspaceStore = create<NetspaceStore>((set, get) => ({
   // Initial state
   netspaceData: [],
   latestData: null,
   isLoading: false,
   error: null,
+  networkType: 'mainnet',
   timeRange: '30d',
   autoRefreshEnabled: false,
   autoRefreshInterval: 300, // 5 minutes in seconds
@@ -102,16 +100,27 @@ export const useNetspaceStore = create<NetspaceStore>((set, get) => ({
   
   // Actions
   fetchNetspaceData: async (timeRange: string) => {
+    const networkType = get().networkType;
     set({ isLoading: true, error: null });
     
     try {
-      // Simulate API call with a small delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const data = await getNetworkData(networkType, timeRange);
       
-      // Get data based on time range
-      const data = getDataForTimeRange(timeRange);
+      // Handle empty data response
+      if (!data || data.length === 0) {
+        set({ 
+          error: `No data available for network: ${networkType} and timeRange: ${timeRange}`,
+          isLoading: false,
+          netspaceData: []
+        });
+        return;
+      }
       
-      set({ netspaceData: data, latestData: data.length > 0 ? data[data.length - 1] : null, isLoading: false });
+      set({ 
+        netspaceData: data, 
+        latestData: data.length > 0 ? data[data.length - 1] : null, 
+        isLoading: false 
+      });
     } catch (error) {
       set({ 
         error: error instanceof Error ? error.message : 'Failed to fetch data', 
@@ -129,6 +138,11 @@ export const useNetspaceStore = create<NetspaceStore>((set, get) => ({
   setTimeRange: (range: string) => {
     set({ timeRange: range });
     get().fetchNetspaceData(range);
+  },
+  
+  setNetworkType: (network: NetworkType) => {
+    set({ networkType: network });
+    get().fetchNetspaceData(get().timeRange);
   },
   
   exportData: (format: 'csv' | 'json') => {

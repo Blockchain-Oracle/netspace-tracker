@@ -1,6 +1,15 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { useNetspaceStore } from "@/lib/store";
+import { Loader2 } from "lucide-react";
+import { formatBytes, formatNumber } from "@/lib/utils";
+import { formatDistanceToNow } from 'date-fns';
+import { LiveDataBanner } from '@/components/LiveDataBanner';
+import { StorageUnitInfo } from "./StorageUnitInfo";
 import {
   LineChart,
   Line,
@@ -11,13 +20,8 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { timeRanges } from '@/app/network-status/data/netspace-data';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { useNetspaceStore } from '@/lib/store';
-import { timeRanges } from '@/lib/mock-data';
-import { formatDistanceToNow } from 'date-fns';
 
 // Custom tooltip component
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -104,52 +108,62 @@ export function NetspaceChart() {
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader className="flex flex-row items-center justify-between px-6">
-        <div>
-          <CardTitle className="text-xl font-bold">Autonomys Netspace Tracker</CardTitle>
-          {lastUpdated && (
-            <p className="text-xs text-muted-foreground">
-              Last updated: {formatDistanceToNow(lastUpdated, { addSuffix: true })}
-            </p>
-          )}
+    <Card className="col-span-3">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <div className="space-y-1">
+          <CardTitle className="text-base font-medium">Telemetry Data</CardTitle>
+          <CardDescription>
+            Historical data from the Autonomys Network
+          </CardDescription>
         </div>
-        <div className="flex gap-2">
-          <Select
-            value={timeRange}
-            onValueChange={(val) => setTimeRange(val)}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select time range" />
-            </SelectTrigger>
-            <SelectContent>
-              {timeRanges.map((range) => (
-                <SelectItem key={range.value} value={range.value}>
-                  {range.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button 
-            variant="outline" 
-            size="icon" 
-            onClick={toggleAutoRefresh}
-            className={autoRefreshEnabled ? 'bg-emerald-100 dark:bg-emerald-900' : ''}
-          >
-            <RefreshIcon className="h-4 w-4" />
-          </Button>
+        <div className="flex items-center space-x-2">
+          {activeTab === "chart" && <StorageUnitInfo />}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-[200px]">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="chart">Chart</TabsTrigger>
+              <TabsTrigger value="data">Data</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
       </CardHeader>
+      <CardContent className="p-0">
+        <Card className="w-full">
+          <CardHeader className="flex flex-row items-center justify-between px-6">
+            <div>
+              <CardTitle className="text-xl font-bold">Autonomys Netspace Tracker</CardTitle>
+              {lastUpdated && (
+                <p className="text-xs text-muted-foreground">
+                  Last updated: {formatDistanceToNow(lastUpdated, { addSuffix: true })}
+                </p>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Select
+                value={timeRange}
+                onValueChange={(val) => setTimeRange(val)}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select time range" />
+                </SelectTrigger>
+                <SelectContent>
+                  {timeRanges.map((range) => (
+                    <SelectItem key={range.value} value={range.value}>
+                      {range.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={toggleAutoRefresh}
+                className={autoRefreshEnabled ? 'bg-emerald-100 dark:bg-emerald-900' : ''}
+              >
+                <RefreshIcon className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardHeader>
 
-      <Tabs defaultValue="chart" value={activeTab} onValueChange={setActiveTab}>
-        <div className="px-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="chart">Chart</TabsTrigger>
-            <TabsTrigger value="data">Data Table</TabsTrigger>
-          </TabsList>
-        </div>
-
-        <CardContent className="p-6">
           <TabsContent value="chart" className="m-0">
             {isLoading ? (
               <div className="flex h-[350px] items-center justify-center">
@@ -259,8 +273,8 @@ export function NetspaceChart() {
               </div>
             )}
           </TabsContent>
-        </CardContent>
-      </Tabs>
+        </Card>
+      </CardContent>
     </Card>
   );
 }
